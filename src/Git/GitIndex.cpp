@@ -353,6 +353,9 @@ int CGitIndexFileMap::LoadIndex(const CString &gitdir)
 	if (pIndex->ReadIndex(gitdir))
 		return -1;
 
+	/*for (int i = 0; i < 5; ++i)
+		::Sleep(1000);*/
+
 	this->SafeSet(gitdir, pIndex);
 
 	return 0;

@@ -232,6 +232,7 @@ public:
 	 * contains an admin directory.
 	 */
 	bool HasAdminDir(CString* projectTopDir = nullptr) const;
+	bool HasAdminDir(CString* projectTopDir, bool force) const;
 	bool HasSubmodules() const;
 	bool HasGitSVNDir() const;
 	bool IsBisectActive() const;

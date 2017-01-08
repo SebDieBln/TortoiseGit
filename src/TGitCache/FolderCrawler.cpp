@@ -1,7 +1,7 @@
 // TortoiseGit - a Windows shell extension for easy version control
 
 // External Cache Copyright (C) 2005-2008,2011,2014 - TortoiseSVN
-// Copyright (C) 2008-2014, 2016 - TortoiseGit
+// Copyright (C) 2008-2014, 2016-2017 - TortoiseGit
 
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -357,27 +357,16 @@ void CFolderCrawler::WorkerThread()
 							nCurrentCrawledpathIndex = 0;
 					}
 					InvalidateRect(hWndHidden, nullptr, FALSE);
-					// HasAdminDir() already checks if the path points to a dir
-					DWORD flags = TGITCACHE_FLAGS_FOLDERISKNOWN;
-					flags |= (workingPath.IsDirectory() ? TGITCACHE_FLAGS_ISFOLDER : 0);
-					flags |= (bRecursive ? TGITCACHE_FLAGS_RECUSIVE_STATUS : 0);
 					{
 						CAutoReadLock readLock(CGitStatusCache::Instance().GetGuard());
 						// Invalidate the cache of folders manually. The cache of files is invalidated
 						// automatically if the status is asked for it and the file times don't match
 						// anymore, so we don't need to manually invalidate those.
-						if (workingPath.IsDirectory())
-						{
-							CCachedDirectory * cachedDir = CGitStatusCache::Instance().GetDirectoryCacheEntry(workingPath);
-							if (cachedDir)
-								cachedDir->Invalidate();
-						}
-						CStatusCacheEntry ce = CGitStatusCache::Instance().GetStatusForPath(workingPath, flags);
-						if (ce.GetEffectiveStatus() > git_wc_status_unversioned)
-						{
+						CCachedDirectory* cachedDir = CGitStatusCache::Instance().GetDirectoryCacheEntry(workingPath.GetDirectory());
+						if (cachedDir && workingPath.IsDirectory())
+							cachedDir->Invalidate();
+						if (cachedDir && cachedDir->GetStatusForMember(workingPath, bRecursive).GetEffectiveStatus() > git_wc_status_unversioned)
 							CGitStatusCache::Instance().UpdateShell(workingPath);
-							CTraceToOutputDebugString::Instance()(_T(__FUNCTION__) L": shell update in folder crawler for %s\n", workingPath.GetWinPath());
-						}
 					}
 					AutoLocker lock(m_critSec);
 					m_pathsToUpdate.erase(workingPath);
@@ -427,10 +416,11 @@ void CFolderCrawler::WorkerThread()
 						nCurrentCrawledpathIndex = 0;
 				}
 				InvalidateRect(hWndHidden, nullptr, FALSE);
+				CCachedDirectory* cachedDir = nullptr;
 				{
 					CAutoReadLock readLock(CGitStatusCache::Instance().GetGuard());
 					// Now, we need to visit this folder, to make sure that we know its 'most important' status
-					CCachedDirectory * cachedDir = CGitStatusCache::Instance().GetDirectoryCacheEntry(workingPath.GetDirectory());
+					cachedDir = CGitStatusCache::Instance().GetDirectoryCacheEntry(workingPath.GetDirectory());
 					// check if the path is monitored by the watcher. If it isn't, then we have to invalidate the cache
 					// for that path and add it to the watcher.
 					if (!CGitStatusCache::Instance().IsPathWatched(workingPath))
@@ -450,9 +440,9 @@ void CFolderCrawler::WorkerThread()
 							cachedDir = nullptr;
 						}
 					}
-					if (cachedDir)
-						cachedDir->RefreshStatus(bRecursive);
 				}
+				if (cachedDir)
+					cachedDir->RefreshStatus(bRecursive);
 
 				// While refreshing the status, we could get another crawl request for the same folder.
 				// This can happen if the crawled folder has a lower status than one of the child folders

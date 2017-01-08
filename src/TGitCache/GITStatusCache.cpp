@@ -523,6 +523,7 @@ CStatusCacheEntry CGitStatusCache::GetStatusForPath(const CTGitPath& path, DWORD
 			{
 				AutoLocker lock(m_critSec);
 				m_mostRecentStatus = entry;
+				CTraceToOutputDebugString::Instance()(_T(__FUNCTION__) L": GetStatusForPath %s %d %d\n", path.GetWinPath(), m_mostRecentStatus.GetEffectiveStatus(), bFetch);
 				return m_mostRecentStatus;
 			}
 		}

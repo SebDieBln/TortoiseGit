@@ -40,8 +40,10 @@ public:
 	CCachedDirectory();
 	CCachedDirectory(const CTGitPath& directoryPath);
 	~CCachedDirectory(void);
-private:
+
 	CStatusCacheEntry GetStatusForMember(const CTGitPath& path, bool bRecursive, bool bFetch = true);
+
+private:
 	CStatusCacheEntry GetCacheStatusForMember(const CTGitPath& path);
 
 	// If path is not emtpy, means fetch special file status.
@@ -59,11 +61,8 @@ public:
 	/// Get the current full status of this folder
 	git_wc_status_kind GetCurrentFullStatus() const {return m_currentFullStatus;}
 private:
+	void GetStatusFromGit(const CTGitPath& path, const CString& sProjectRoot, bool isSelf);
 
-	CStatusCacheEntry GetStatusFromCache(const CTGitPath &path, bool bRecursive);
-	CStatusCacheEntry GetStatusFromGit(const CTGitPath &path, const CString& sProjectRoot, bool isSelf);
-
-//	static git_error_t* GetStatusCallback(void *baton, const char *path, git_wc_status2_t *status);
 	static BOOL GetStatusCallback(const CString & path, git_wc_status_kind status, bool isDir, void * /*pUserData*/, bool assumeValid, bool skipWorktree);
 	void AddEntry(const CTGitPath& path, const git_wc_status2_t* pGitStatus, DWORD validuntil = 0);
 	CString GetCacheKey(const CTGitPath& path);
@@ -80,6 +79,8 @@ private:
 
 private:
 	CComAutoCriticalSection m_critSec;
+
+	volatile LONG m_FetchingStatus;
 
 	// The cache of files and directories within this directory
 	typedef std::map<CString, CStatusCacheEntry> CacheEntryMap;
