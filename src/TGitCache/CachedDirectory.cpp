@@ -711,20 +711,20 @@ void CCachedDirectory::RefreshStatus(bool bRecursive)
 		// This reduces the disk access a *lot*.
 		std::map<CString, ULONGLONG> filetimes;
 		WIN32_FIND_DATA FindFileData;
-		CAutoFindFile hFind = FindFirstFile(m_directoryPath.GetWinPathString() + L"\\*.*", &FindFileData);
+		CAutoFindFile hFind = ::FindFirstFileEx(m_directoryPath.GetWinPathString() + L"\\*.*", FindExInfoBasic, &FindFileData, FindExSearchNameMatch, nullptr, FIND_FIRST_EX_LARGE_FETCH);
 		if (hFind)
 		{
-			while (FindNextFile(hFind, &FindFileData))
+			do
 			{
-				if ((wcscmp(FindFileData.cFileName, L"..") == 0) ||
-					(wcscmp(FindFileData.cFileName, L".") == 0))
+				if ((wcscmp(FindFileData.cFileName, L"..") == 0) || (wcscmp(FindFileData.cFileName, L".") == 0))
 					continue;
 				ULARGE_INTEGER ft;
 				ft.LowPart = FindFileData.ftLastWriteTime.dwLowDateTime;
 				ft.HighPart = FindFileData.ftLastWriteTime.dwHighDateTime;
 
 				filetimes[FindFileData.cFileName] = ft.QuadPart;
-			}
+			} while (::FindNextFile(hFind, &FindFileData));
+
 			hFind.CloseHandle(); // explicit close handle to shorten its life time
 		}
 
