@@ -292,7 +292,7 @@ CStatusCacheEntry CCachedDirectory::GetStatusForMember(const CTGitPath& path, bo
 				return dirEntry->GetOwnStatus(bRecursive);
 			}
 		}
-		CGitStatusCache::Instance().AddFolderForCrawling(path);
+		CGitStatusCache::Instance().AddFolderForCrawling(path.GetDirectory()); // update
 		return CStatusCacheEntry();
 	}
 
@@ -308,7 +308,7 @@ CStatusCacheEntry CCachedDirectory::GetStatusForMember(const CTGitPath& path, bo
 	if (!bFetch)
 	{
 		if (!IsOwnStatusValid() && !m_FetchingStatus) // and not already fetching
-			CGitStatusCache::Instance().AddFolderForCrawling(path);
+			CGitStatusCache::Instance().AddFolderForCrawling(path.GetDirectory());
 		else
 			int bla = 65;
 		if (bRequestForSelf)
@@ -350,7 +350,7 @@ CStatusCacheEntry CCachedDirectory::GetStatusForMember(const CTGitPath& path, bo
 				}
 			}
 			if (!m_FetchingStatus)
-				CGitStatusCache::Instance().AddFolderForCrawling(path);
+				CGitStatusCache::Instance().AddFolderForCrawling(path.GetDirectory());
 			else
 				int bla2 = 55;
 		}
