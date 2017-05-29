@@ -358,8 +358,8 @@ CStatusCacheEntry CCachedDirectory::GetStatusForMember(const CTGitPath& path, bo
 		//All file ignored if under ignore directory
 		/*if (m_ownStatus.GetEffectiveStatus() == git_wc_status_ignored)
 			return CStatusCacheEntry(git_wc_status_ignored);*/
-		if (m_ownStatus.GetEffectiveStatus() == git_wc_status_unversioned)
-			return CStatusCacheEntry(git_wc_status_unversioned);
+		/*if (m_ownStatus.GetEffectiveStatus() == git_wc_status_unversioned)
+			return CStatusCacheEntry(git_wc_status_unversioned);*/
 
 		// Look up a file in our own cache
 		CString strCacheKey = GetCacheKey(path);
@@ -390,7 +390,7 @@ CStatusCacheEntry CCachedDirectory::GetStatusForMember(const CTGitPath& path, bo
 		m_mostImportantFileStatus = git_wc_status_none;
 		m_childDirectories.clear();
 		m_entryCache.clear();
-		//m_ownStatus.SetStatus(nullptr);
+		m_ownStatus.SetStatus(nullptr);
 	}
 
 	GetStatusFromGit(path, sProjectRoot, bRequestForSelf);
@@ -400,7 +400,6 @@ CStatusCacheEntry CCachedDirectory::GetStatusForMember(const CTGitPath& path, bo
 	// If it has, then we should tell our parent
 	UpdateCurrentStatus();
 
-	CString l = path.GetWinPathString();
 	return m_currentFullStatus;
 }
 
@@ -773,50 +772,6 @@ void CCachedDirectory::RefreshStatus(bool bRecursive)
 
 	for (int i = 0; i < crawlPathList.GetCount(); ++i)
 		CGitStatusCache::Instance().AddFolderForCrawling(crawlPathList[i]);
-
-	// snipp!
-	/*AutoLocker lock(m_critSec);
-	// We also need to check if all our file members have the right date on them
-	CacheEntryMap::iterator itMembers;
-	std::set<CTGitPath> refreshedpaths;
-	ULONGLONG now = GetTickCount64();
-	if (m_entryCache.empty())
-		return;
-	for (itMembers = m_entryCache.begin(); itMembers != m_entryCache.end(); ++itMembers)
-	{
-		if (itMembers->first)
-		{
-			CTGitPath filePath(m_directoryPath);
-			filePath.AppendPathString(itMembers->first);
-			std::set<CTGitPath>::iterator refr_it;
-			if ((!filePath.IsEquivalentToWithoutCase(m_directoryPath))&&
-				(((refr_it = refreshedpaths.lower_bound(filePath)) == refreshedpaths.end()) || !filePath.IsEquivalentToWithoutCase(*refr_it)))
-			{
-				if ((itMembers->second.HasExpired(now))||(!itMembers->second.DoesFileTimeMatch(filePath.GetLastWriteTime())))
-				{
-					lock.Unlock();
-					// We need to request this item as well
-					GetStatusForMember(filePath,bRecursive);
-					// GetStatusForMember now has recreated the m_entryCache map.
-					// So start the loop again, but add this path to the refreshed paths set
-					// to make sure we don't refresh this path again. This is to make sure
-					// that we don't end up in an endless loop.
-					lock.Lock();
-					refreshedpaths.insert(refr_it, filePath);
-					itMembers = m_entryCache.begin();
-					if (m_entryCache.empty())
-						return;
-					continue;
-				}
-				else if ((bRecursive)&&(itMembers->second.IsDirectory()))
-				{
-					// crawl all sub folders too! Otherwise a change deep inside the
-					// tree which has changed won't get propagated up the tree.
-					CGitStatusCache::Instance().AddFolderForCrawling(filePath);
-				}
-			}
-		}
-	}*/
 }
 
 void CCachedDirectory::RefreshMostImportant(bool bUpdateShell /* = true */)
