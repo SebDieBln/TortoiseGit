@@ -146,7 +146,7 @@ int CGitIndexList::ReadIndex(CString dgitdir)
 	return 0;
 }
 
-int CGitIndexList::GetFileStatus(const CString &gitdir, const CString &pathorg, git_wc_status_kind *status, __int64 time, __int64 filesize, FILL_STATUS_CALLBACK callback, void *pData, CGitHash *pHash, bool * assumeValid, bool * skipWorktree)
+int CGitIndexList::GetFileStatus(const CString& gitdir, const CString& pathorg, git_wc_status_kind* status, __int64 time, __int64 filesize, CGitHash* pHash, bool* assumeValid, bool* skipWorktree)
 {
 	if (!status)
 		return 0;
@@ -160,10 +160,6 @@ int CGitIndexList::GetFileStatus(const CString &gitdir, const CString &pathorg, 
 		*status = git_wc_status_unversioned;
 		if (pHash)
 			pHash->Empty();
-
-		if (callback && assumeValid && skipWorktree)
-			callback(CombinePath(gitdir, pathorg), *status, false, pData, *assumeValid, *skipWorktree);
-
 		return 0;
 	}
 
@@ -217,15 +213,11 @@ int CGitIndexList::GetFileStatus(const CString &gitdir, const CString &pathorg, 
 	if (pHash)
 		*pHash = entry.m_IndexHash;
 
-	if (callback && assumeValid && skipWorktree)
-		callback(CombinePath(gitdir, pathorg), *status, false, pData, *assumeValid, *skipWorktree);
-
 	return 0;
 }
 
 int CGitIndexList::GetStatus(const CString& gitdir, CString path, git_wc_status_kind* status,
 							 BOOL IsFull, BOOL /*IsRecursive*/,
-							 FILL_STATUS_CALLBACK callback, void *pData,
 							 CGitHash *pHash, bool * assumeValid, bool * skipWorktree)
 {
 	__int64 time, filesize = 0;
@@ -244,15 +236,12 @@ int CGitIndexList::GetStatus(const CString& gitdir, CString path, git_wc_status_
 	if (result)
 	{
 		*status = git_wc_status_deleted;
-		if (callback && assumeValid && skipWorktree)
-			callback(CombinePath(gitdir, path), git_wc_status_deleted, false, pData, *assumeValid, *skipWorktree);
-
 		return 0;
 	}
 
 	if (!isDir)
 	{
-		GetFileStatus(gitdir, path, status, time, filesize, callback, pData, pHash, assumeValid, skipWorktree);
+		GetFileStatus(gitdir, path, status, time, filesize, pHash, assumeValid, skipWorktree);
 		return 0;
 	}
 
@@ -270,9 +259,6 @@ int CGitIndexList::GetStatus(const CString& gitdir, CString path, git_wc_status_
 		if (!IsFull)
 		{
 			*status = git_wc_status_normal;
-			if (callback)
-				callback(CombinePath(gitdir, path), *status, false, pData, (entry.m_Flags & GIT_IDXENTRY_VALID) && !(entry.m_FlagsExtended & GIT_IDXENTRY_SKIP_WORKTREE), (entry.m_FlagsExtended & GIT_IDXENTRY_SKIP_WORKTREE) != 0);
-
 			return 0;
 		}
 
@@ -286,11 +272,8 @@ int CGitIndexList::GetStatus(const CString& gitdir, CString path, git_wc_status_
 		if (skipWorktree)
 			*skipWorktree = false;
 
-		GetFileStatus(gitdir, entry.m_FileName, status, time, filesize, callback, pData, nullptr, assumeValid, skipWorktree);
+		GetFileStatus(gitdir, entry.m_FileName, status, time, filesize, nullptr, assumeValid, skipWorktree);
 
-		// if a file is assumed valid, we need to inform the caller, otherwise the assumevalid flag might not get to the explorer on first open of a repository
-		if (callback && assumeValid && skipWorktree && (*assumeValid || *skipWorktree))
-			callback(CombinePath(gitdir, path), *status, false, pData, *assumeValid, *skipWorktree);
 		if (*status != git_wc_status_none)
 		{
 			if (dirstatus == git_wc_status_none)
@@ -304,9 +287,6 @@ int CGitIndexList::GetStatus(const CString& gitdir, CString path, git_wc_status_
 		*status = dirstatus;
 	else
 		*status = git_wc_status_unversioned;
-
-	if (callback)
-		callback(CombinePath(gitdir, path), *status, false, pData, false, false);
 
 	return 0;
 }
@@ -362,7 +342,6 @@ int CGitIndexFileMap::LoadIndex(const CString &gitdir)
 }
 
 int CGitIndexFileMap::GetFileStatus(const CString &gitdir, const CString &path, git_wc_status_kind *status,BOOL IsFull, BOOL IsRecursive,
-									FILL_STATUS_CALLBACK callback, void *pData,
 									CGitHash *pHash,
 									bool* assumeValid, bool* skipWorktree)
 {
@@ -370,7 +349,7 @@ int CGitIndexFileMap::GetFileStatus(const CString &gitdir, const CString &path, 
 
 	SHARED_INDEX_PTR pIndex = this->SafeGet(gitdir);
 	if (pIndex)
-		pIndex->GetStatus(gitdir, path, status, IsFull, IsRecursive, callback, pData, pHash, assumeValid, skipWorktree);
+		pIndex->GetStatus(gitdir, path, status, IsFull, IsRecursive, pHash, assumeValid, skipWorktree);
 	else
 	{
 		// git working tree has not index
