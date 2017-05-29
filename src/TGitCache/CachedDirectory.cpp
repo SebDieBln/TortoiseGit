@@ -44,7 +44,11 @@ CCachedDirectory::CCachedDirectory(const CTGitPath& directoryPath)
 
 	directoryPath.HasAdminDir(); // make sure HasAdminDir is always initialized
 	m_directoryPath = directoryPath;
+	if (directoryPath.GetWinPathString().Find(L"\\\\") > 0)
+		ATLASSERT(FALSE);
 	m_directoryPath.GetGitPathString(); // make sure git path string is set
+	if (m_directoryPath.GetGitPathString().Find(L'\\') > 0)
+		ATLASSERT(FALSE);
 }
 
 BOOL CCachedDirectory::SaveToDisk(FILE * pFile)
@@ -190,17 +194,17 @@ void CCachedDirectory::GetStatusFromGit(const CTGitPath& path, const CString& sP
 	CString s = path.GetGitPathString();
 	if (s.GetLength() > sProjectRoot.GetLength())
 	{
-		if (s[sProjectRoot.GetLength()] == L'/')
-			subpaths = s.Right(s.GetLength() - sProjectRoot.GetLength() - 1);
+		if (s[sProjectRoot.GetLength()] == L'\\')
+			subpaths = s.Right(s.GetLength() - sProjectRoot.GetLength() - 2);
 		else
-			subpaths = s.Right(s.GetLength() - sProjectRoot.GetLength());
+			subpaths = s.Right(s.GetLength() - sProjectRoot.GetLength() - 1);
 	}
 
 	GitStatus *pGitStatus = &CGitStatusCache::Instance().m_GitStatus;
 	UNREFERENCED_PARAMETER(pGitStatus);
 
 	bool isVersion =true;
-	pGitStatus->IsUnderVersionControl(sProjectRoot, subpaths, path.IsDirectory(), &isVersion);
+	//pGitStatus->IsUnderVersionControl(sProjectRoot, subpaths, path.IsDirectory(), &isVersion);
 	if(!isVersion)
 	{	//untracked file
 		bool isDir = path.IsDirectory();
@@ -445,6 +449,14 @@ CStatusCacheEntry CCachedDirectory::GetStatusForMember(const CTGitPath& path, bo
 		return CStatusCacheEntry(git_wc_status_unknown);
 	}
 
+	{
+		AutoLocker lock(m_critSec);
+		m_mostImportantFileStatus = git_wc_status_none;
+		m_childDirectories.clear();
+		m_entryCache.clear();
+		//m_ownStatus.SetStatus(nullptr);
+	}
+
 	GetStatusFromGit(path, sProjectRoot, bRequestForSelf);
 
 	// Now that we've refreshed our Git status, we can see if it's
@@ -570,7 +582,7 @@ BOOL CCachedDirectory::GetStatusCallback(const CString& path, git_wc_status_kind
 	tpath.TrimRight(L'\\');
 
 	CTGitPath gitPath;
-	gitPath.SetFromGit(tpath, isDir);
+	gitPath.SetFromWin(tpath, isDir);
 
 	//	if(status->entry)
 	{
