@@ -320,9 +320,6 @@ int GitStatus::EnumDirStatus(const CString& gitdir, const CString& subpath, git_
 	std::map<CString, git_wc_status2_t> dirstatus;
 	std::vector<CString> allEntries;
 
-	if (path == L"src/kernel32.pdb/")
-		int bla = 5;
-
 	// TODO: svn_wc_status_external
 
 	// do status for self
@@ -334,7 +331,7 @@ int GitStatus::EnumDirStatus(const CString& gitdir, const CString& subpath, git_
 		dirstatus[path] = { git_wc_status_unversioned, git_wc_status_none, false, false };
 	ATLASSERT(PathIsDirectory(CombinePath(gitdir, subpath)));
 	allEntries.push_back(path);
-	if (IsIgnore)
+	if (IsIgnore && !path.IsEmpty())
 	{
 		g_IgnoreList.CheckAndUpdateIgnoreFiles(gitdir, path, true);
 		if (g_IgnoreList.IsIgnore(path, gitdir, true))
@@ -362,11 +359,22 @@ int GitStatus::EnumDirStatus(const CString& gitdir, const CString& subpath, git_
 			{
 				g_IgnoreList.CheckAndUpdateIgnoreFiles(gitdir, casepath, bIsDir);
 				if (g_IgnoreList.IsIgnore(casepath, gitdir, bIsDir))
+				{
 					dirstatus[casepath] = { git_wc_status_ignored, git_wc_status_none, false, false };
+					continue;
+				}
 			}
-			else
-				dirstatus[casepath] = { git_wc_status_unversioned, git_wc_status_none, false, false };
+
+			dirstatus[casepath] = { git_wc_status_unversioned, git_wc_status_none, false, false };
 		}
+
+		std::sort(allEntries.begin(), allEntries.end());
+		for (const auto& entry : allEntries)
+		{
+			auto dirstatusentry = dirstatus.find(entry);
+			callback(CombinePath(gitdir, entry), GitStatus::GetMoreImportant(dirstatusentry->second.text_status, dirstatusentry->second.prop_status), CStringUtils::EndsWith(entry, L"/") || entry.IsEmpty(), pData, dirstatusentry->second.assumeValid, dirstatusentry->second.skipWorktree);
+		}
+
 		return 0;
 	}
 
