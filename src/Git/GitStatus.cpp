@@ -286,6 +286,8 @@ int GitStatus::GetFileList(CString path, std::vector<CGitFileName> &list)
 		CGitFileName filename(data.cFileName);
 		if(data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
 			filename.m_FileName += L'/';
+		// FindExInfoBasic: symlink folder: 1040: FILE_ATTRIBUTE_REPARSE_POINT + FILE_ATTRIBUTE_DIRECTORY
+		// FindExInfoBasic: symlink file: 1056: FILE_ATTRIBUTE_REPARSE_POINT + FILE_ATTRIBUTE_ARCHIVE
 
 		list.push_back(filename);
 
@@ -633,7 +635,7 @@ int GitStatus::GetDirStatus(const CString& gitdir, const CString& subpath, git_w
 	}
 
 	// When status == git_wc_status_conflicted, needn't check each file status
-	// because git_wc_status_conflicted is highest.s
+	// because git_wc_status_conflicted is highest.
 	if (*status == git_wc_status_conflicted)
 		return 0;
 
