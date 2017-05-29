@@ -54,7 +54,7 @@ public:
 	void Invalidate();
 	void RefreshStatus(bool bRecursive);
 private:
-	void RefreshMostImportant();
+	void RefreshMostImportant(bool bUpdateShell = true);
 	BOOL SaveToDisk(FILE * pFile);
 	BOOL LoadFromDisk(FILE * pFile);
 public:
@@ -75,7 +75,7 @@ private:
 
 	// Update our composite status and deal with things if it's changed
 	void UpdateCurrentStatus();
-
+	void SetChildStatus(const CString& childDir, git_wc_status_kind childStatus);
 
 private:
 	CComAutoCriticalSection m_critSec;
@@ -85,7 +85,6 @@ private:
 	// The cache of files and directories within this directory
 	typedef std::map<CString, CStatusCacheEntry> CacheEntryMap;
 	CacheEntryMap m_entryCache;
-	CacheEntryMap m_entryCache_tmp; // used for updating m_entryCache and removing "removed" entries
 
 	/// A vector if iterators to child directories - used to put-together recursive status
 	typedef std::map<CString, git_wc_status_kind>  ChildDirStatus;

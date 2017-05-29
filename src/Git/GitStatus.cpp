@@ -320,8 +320,18 @@ int GitStatus::EnumDirStatus(const CString& gitdir, const CString& subpath, git_
 	std::map<CString, git_wc_status2_t> dirstatus;
 	std::vector<CString> allEntries;
 
+	if (path == L"src/kernel32.pdb/")
+		int bla = 5;
+
+	// TODO: svn_wc_status_external
+
 	// do status for self
-	dirstatus[path] = { git_wc_status_normal, git_wc_status_none, false, false };
+	bool isVersion = true;
+	IsUnderVersionControl(gitdir, subpath, TRUE, &isVersion);
+	if (isVersion)
+		dirstatus[path] = { git_wc_status_normal, git_wc_status_none, false, false };
+	else
+		dirstatus[path] = { git_wc_status_unversioned, git_wc_status_none, false, false };
 	ATLASSERT(PathIsDirectory(CombinePath(gitdir, subpath)));
 	allEntries.push_back(path);
 	if (IsIgnore)
@@ -502,7 +512,7 @@ int GitStatus::EnumDirStatus(const CString& gitdir, const CString& subpath, git_
 	for (const auto& entry : allEntries)
 	{
 		auto dirstatusentry = dirstatus.find(entry);
-		callback(CombinePath(gitdir, entry), GitStatus::GetMoreImportant(dirstatusentry->second.text_status, dirstatusentry->second.prop_status), CStringUtils::EndsWith(entry, L"/"), pData, dirstatusentry->second.assumeValid, dirstatusentry->second.skipWorktree);
+		callback(CombinePath(gitdir, entry), GitStatus::GetMoreImportant(dirstatusentry->second.text_status, dirstatusentry->second.prop_status), CStringUtils::EndsWith(entry, L"/") || entry.IsEmpty(), pData, dirstatusentry->second.assumeValid, dirstatusentry->second.skipWorktree);
 	}
 	return 0;
 }
