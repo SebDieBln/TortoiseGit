@@ -508,7 +508,6 @@ int GitStatus::EnumDirStatus(const CString& gitdir, const CString& subpath, git_
 						dirstatusentry->second.text_status = git_wc_status_deleted;
 					else
 					{
-						ATLASSERT(false);
 						dirstatus[path + filename] = { git_wc_status_deleted, git_wc_status_deleted, false, false };
 						allEntries.push_back(path + filename);
 					}
