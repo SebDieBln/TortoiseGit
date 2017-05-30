@@ -716,8 +716,9 @@ void CCachedDirectory::RefreshStatus(bool bRecursive)
 		{
 			do
 			{
-				if ((wcscmp(FindFileData.cFileName, L"..") == 0) || (wcscmp(FindFileData.cFileName, L".") == 0))
+				if (wcscmp(FindFileData.cFileName, L"..") == 0 || wcscmp(FindFileData.cFileName, L".") == 0)
 					continue;
+
 				ULARGE_INTEGER ft;
 				ft.LowPart = FindFileData.ftLastWriteTime.dwLowDateTime;
 				ft.HighPart = FindFileData.ftLastWriteTime.dwHighDateTime;
@@ -730,27 +731,26 @@ void CCachedDirectory::RefreshStatus(bool bRecursive)
 
 		AutoLocker lock(m_critSec);
 		// We also need to check if all our file members have the right date on them
-		for (CacheEntryMap::iterator itMembers = m_entryCache.begin(); itMembers != m_entryCache.end(); ++itMembers)
+		for (auto itMembers = m_entryCache.cbegin(); itMembers != m_entryCache.cend(); ++itMembers)
 		{
-			if ((itMembers->first) && (!itMembers->first.IsEmpty()))
-			{
-				CTGitPath filePath(GetFullPathString(itMembers->first));
-				if (!filePath.IsEquivalentToWithoutCase(m_directoryPath))
-				{
-					// we only have file members in our entry cache
-					//ATLASSERT(!itMembers->second.IsDirectory());
+			if (!itMembers->first || itMembers->first.IsEmpty())
+				continue;
 
-					auto ftIt = filetimes.find(itMembers->first.Mid(1));
-					if (ftIt != filetimes.end())
-					{
-						ULONGLONG ft = ftIt->second;
-						if ((itMembers->second.HasExpired(now)) || (!itMembers->second.DoesFileTimeMatch(ft)))
-						{
-							// We need to request this item as well
-							updatePathList.AddPath(filePath);
-						}
-					}
-				}
+			CTGitPath filePath(GetFullPathString(itMembers->first));
+			ATLASSERT(!filePath.IsEquivalentToWithoutCase(m_directoryPath));
+
+			// we only have file members in our entry cache
+			//ATLASSERT(!itMembers->second.IsDirectory());
+
+			auto ftIt = filetimes.find(itMembers->first);
+			if (ftIt == filetimes.end())
+				continue;
+
+			ULONGLONG ft = ftIt->second;
+			if (itMembers->second.HasExpired(now) || !itMembers->second.DoesFileTimeMatch(ft))
+			{
+				// We need to request this item as well
+				updatePathList.AddPath(filePath);
 			}
 		}
 
@@ -758,7 +758,7 @@ void CCachedDirectory::RefreshStatus(bool bRecursive)
 		{
 			// crawl all sub folders too! Otherwise a change deep inside the
 			// tree which has changed won't get propagated up the tree.
-			for (ChildDirStatus::const_iterator it = m_childDirectories.begin(); it != m_childDirectories.end(); ++it)
+			for (auto it = m_childDirectories.cbegin(); it != m_childDirectories.cend(); ++it)
 			{
 				CTGitPath path;
 				path.SetFromWin(it->first, true);
