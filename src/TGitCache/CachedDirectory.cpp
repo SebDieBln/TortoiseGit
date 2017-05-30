@@ -44,11 +44,9 @@ CCachedDirectory::CCachedDirectory(const CTGitPath& directoryPath)
 
 	directoryPath.HasAdminDir(); // make sure HasAdminDir is always initialized
 	m_directoryPath = directoryPath;
-	if (directoryPath.GetWinPathString().Find(L"\\\\") > 0)
-		ATLASSERT(FALSE);
+	ATLASSERT(directoryPath.GetWinPathString().Find(L"\\\\") < 0);
 	m_directoryPath.GetGitPathString(); // make sure git path string is set
-	if (m_directoryPath.GetGitPathString().Find(L'\\') > 0)
-		ATLASSERT(FALSE);
+	ATLASSERT(m_directoryPath.GetGitPathString().Find(L'\\') < 0);
 }
 
 BOOL CCachedDirectory::SaveToDisk(FILE * pFile)
@@ -188,7 +186,7 @@ BOOL CCachedDirectory::LoadFromDisk(FILE * pFile)
 	return true;
 }
 
-void CCachedDirectory::GetStatusFromGit(const CTGitPath& path, const CString& sProjectRoot, bool isSelf)
+void CCachedDirectory::GetStatusFromGit(const CTGitPath& path, const CString& sProjectRoot)
 {
 	CString subpaths;
 	CString s = path.GetGitPathString();
@@ -200,7 +198,7 @@ void CCachedDirectory::GetStatusFromGit(const CTGitPath& path, const CString& sP
 			subpaths = s.Right(s.GetLength() - sProjectRoot.GetLength() - 1);
 	}
 
-	EnumFiles(path, sProjectRoot, subpaths, isSelf);
+	EnumFiles(path, sProjectRoot, subpaths);
 }
 
 /// bFetch is true, fetch all status, call by crawl.
@@ -393,7 +391,7 @@ CStatusCacheEntry CCachedDirectory::GetStatusForMember(const CTGitPath& path, bo
 		m_ownStatus.SetStatus(nullptr);
 	}
 
-	GetStatusFromGit(path, sProjectRoot, bRequestForSelf);
+	GetStatusFromGit(path, sProjectRoot);
 
 	// Now that we've refreshed our Git status, we can see if it's
 	// changed the 'most important' status value for this directory.
@@ -414,7 +412,7 @@ CStatusCacheEntry CCachedDirectory::GetCacheStatusForMember(const CTGitPath& pat
 	return CStatusCacheEntry();
 }
 
-int CCachedDirectory::EnumFiles(const CTGitPath& path, CString sProjectRoot, const CString& sSubPath, bool isSelf)
+int CCachedDirectory::EnumFiles(const CTGitPath& path, CString sProjectRoot, const CString& sSubPath)
 {
 	if (InterlockedExchange(&m_FetchingStatus, TRUE))
 		return -1;

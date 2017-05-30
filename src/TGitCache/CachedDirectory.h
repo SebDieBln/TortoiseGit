@@ -47,7 +47,7 @@ private:
 	CStatusCacheEntry GetCacheStatusForMember(const CTGitPath& path);
 
 	// If path is not emtpy, means fetch special file status.
-	int EnumFiles(const CTGitPath& path, CString sProjectRoot, const CString& sSubPath, bool isSelf);
+	int EnumFiles(const CTGitPath& path, CString sProjectRoot, const CString& sSubPath);
 	CStatusCacheEntry GetOwnStatus(bool bRecursive);
 	bool IsOwnStatusValid() const;
 public:
@@ -61,7 +61,7 @@ public:
 	/// Get the current full status of this folder
 	git_wc_status_kind GetCurrentFullStatus() const {return m_currentFullStatus;}
 private:
-	void GetStatusFromGit(const CTGitPath& path, const CString& sProjectRoot, bool isSelf);
+	void GetStatusFromGit(const CTGitPath& path, const CString& sProjectRoot);
 
 	static BOOL GetStatusCallback(const CString & path, git_wc_status_kind status, bool isDir, void * /*pUserData*/, bool assumeValid, bool skipWorktree);
 	void AddEntry(const CTGitPath& path, const git_wc_status2_t* pGitStatus, DWORD validuntil = 0);
