@@ -413,7 +413,7 @@ int GitStatus::EnumDirStatus(const CString& gitdir, const CString& subpath, git_
 				dirstatus[onepath] = { git_wc_status_unversioned, git_wc_status_unversioned, false, false };
 		}
 		else if (pos == NPOS && posintree != NPOS) /* check if file delete in index */
-			dirstatus[onepath] = { git_wc_status_missing, git_wc_status_none, false, false };
+			dirstatus[onepath] = { git_wc_status_deleted, git_wc_status_none, false, false };
 		else if (pos != NPOS && posintree == NPOS) /* Check if file added */
 		{
 			if ((*indexptr)[pos].m_Flags & GIT_IDXENTRY_STAGEMASK)
@@ -508,7 +508,7 @@ int GitStatus::EnumDirStatus(const CString& gitdir, const CString& subpath, git_
 						dirstatusentry->second.text_status = git_wc_status_deleted;
 					else
 					{
-						dirstatus[path + filename] = { git_wc_status_deleted, git_wc_status_deleted, false, false };
+						dirstatus[path + filename] = { git_wc_status_deleted, git_wc_status_unknown, false, false };
 						allEntries.push_back(path + filename);
 					}
 				}

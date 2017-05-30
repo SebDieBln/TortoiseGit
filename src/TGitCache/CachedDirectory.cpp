@@ -793,5 +793,8 @@ void CCachedDirectory::RefreshMostImportant(bool bUpdateShell /* = true */)
 		CTraceToOutputDebugString::Instance()(_T(__FUNCTION__) L": status change of path %s\n", m_directoryPath.GetWinPath());
 		CGitStatusCache::Instance().UpdateShell(m_directoryPath);
 	}
+	// folders can only be none, unversioned, normal, modified, and conflicted
+	if (newStatus == git_wc_status_deleted || newStatus == git_wc_status_added)
+		newStatus = git_wc_status_modified;
 	m_mostImportantFileStatus = newStatus;
 }
