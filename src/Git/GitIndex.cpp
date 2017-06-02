@@ -217,7 +217,7 @@ int CGitIndexList::GetFileStatus(const CString& gitdir, const CString& pathorg, 
 }
 
 int CGitIndexList::GetStatus(const CString& gitdir, CString path, git_wc_status_kind* status,
-							 BOOL IsFull, BOOL /*IsRecursive*/,
+							 BOOL IsFull,
 							 CGitHash *pHash, bool * assumeValid, bool * skipWorktree)
 {
 	__int64 time, filesize = 0;
@@ -341,7 +341,7 @@ int CGitIndexFileMap::LoadIndex(const CString &gitdir)
 	return 0;
 }
 
-int CGitIndexFileMap::GetFileStatus(const CString &gitdir, const CString &path, git_wc_status_kind *status,BOOL IsFull, BOOL IsRecursive,
+int CGitIndexFileMap::GetFileStatus(const CString &gitdir, const CString &path, git_wc_status_kind *status,BOOL IsFull,
 									CGitHash *pHash,
 									bool* assumeValid, bool* skipWorktree)
 {
@@ -349,7 +349,7 @@ int CGitIndexFileMap::GetFileStatus(const CString &gitdir, const CString &path, 
 
 	SHARED_INDEX_PTR pIndex = this->SafeGet(gitdir);
 	if (pIndex)
-		pIndex->GetStatus(gitdir, path, status, IsFull, IsRecursive, pHash, assumeValid, skipWorktree);
+		pIndex->GetStatus(gitdir, path, status, IsFull, pHash, assumeValid, skipWorktree);
 	else
 	{
 		// git working tree has not index

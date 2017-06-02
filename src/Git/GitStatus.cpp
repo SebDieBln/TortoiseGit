@@ -194,7 +194,7 @@ int GitStatus::GetFileStatus(const CString& gitdir, CString path, git_wc_status_
 	git_wc_status_kind st = git_wc_status_none;
 	CGitHash hash;
 
-	g_IndexFileMap.GetFileStatus(gitdir, path, &st, IsFull, false, &hash, assumeValid, skipWorktree);
+	g_IndexFileMap.GetFileStatus(gitdir, path, &st, IsFull, &hash, assumeValid, skipWorktree);
 
 	if (st == git_wc_status_conflicted)
 	{
@@ -299,11 +299,8 @@ int GitStatus::GetFileList(CString path, std::vector<CGitFileName> &list)
 	return 0;
 }
 
-int GitStatus::EnumDirStatus(const CString& gitdir, const CString& subpath, git_wc_status_kind* status, BOOL IsFul, BOOL /*IsRecursive*/, BOOL IsIgnore, FILL_STATUS_CALLBACK callback, void* pData)
+int GitStatus::EnumDirStatus(const CString& gitdir, const CString& subpath, FILL_STATUS_CALLBACK callback, void* pData)
 {
-	if (!status)
-		return 0;
-
 	CString path = subpath;
 
 	path.Replace(L'\\', L'/');
@@ -331,7 +328,7 @@ int GitStatus::EnumDirStatus(const CString& gitdir, const CString& subpath, git_
 		dirstatus[path] = { git_wc_status_unversioned, git_wc_status_none, false, false };
 	ATLASSERT(PathIsDirectory(CombinePath(gitdir, subpath)));
 	allEntries.push_back(path);
-	if (IsIgnore && !path.IsEmpty())
+	if (!path.IsEmpty())
 	{
 		g_IgnoreList.CheckAndUpdateIgnoreFiles(gitdir, path, true);
 		if (g_IgnoreList.IsIgnore(path, gitdir, true))
@@ -355,14 +352,11 @@ int GitStatus::EnumDirStatus(const CString& gitdir, const CString& subpath, git_
 			if (!it->m_FileName.IsEmpty() && it->m_FileName[it->m_FileName.GetLength() - 1] == L'/')
 				bIsDir = true;
 
-			if (IsIgnore)
+			g_IgnoreList.CheckAndUpdateIgnoreFiles(gitdir, casepath, bIsDir);
+			if (g_IgnoreList.IsIgnore(casepath, gitdir, bIsDir))
 			{
-				g_IgnoreList.CheckAndUpdateIgnoreFiles(gitdir, casepath, bIsDir);
-				if (g_IgnoreList.IsIgnore(casepath, gitdir, bIsDir))
-				{
-					dirstatus[casepath] = { git_wc_status_ignored, git_wc_status_none, false, false };
-					continue;
-				}
+				dirstatus[casepath] = { git_wc_status_ignored, git_wc_status_none, false, false };
+				continue;
 			}
 
 			dirstatus[casepath] = { git_wc_status_unversioned, git_wc_status_none, false, false };
@@ -400,12 +394,6 @@ int GitStatus::EnumDirStatus(const CString& gitdir, const CString& subpath, git_
 
 		if (pos == NPOS && posintree == NPOS)
 		{
-			if (!IsIgnore)
-			{
-				dirstatus[onepath] = { git_wc_status_unversioned, git_wc_status_unversioned, false, false };
-				continue;
-			}
-
 			g_IgnoreList.CheckAndUpdateIgnoreFiles(gitdir, onepath, bIsDir);
 			if (g_IgnoreList.IsIgnore(onepath, gitdir, bIsDir))
 				dirstatus[onepath] = { git_wc_status_ignored, git_wc_status_unversioned, false, false };
@@ -433,7 +421,7 @@ int GitStatus::EnumDirStatus(const CString& gitdir, const CString& subpath, git_
 				bool assumeValid = false;
 				bool skipWorktree = false;
 				git_wc_status_kind filestatus;
-				GetFileStatus(gitdir, onepath, &filestatus, IsFul, IsIgnore, &assumeValid, &skipWorktree);
+				GetFileStatus(gitdir, onepath, &filestatus, TRUE, TRUE, &assumeValid, &skipWorktree);
 				dirstatus[onepath] = { filestatus, filestatus, assumeValid, skipWorktree };
 			}
 		}

@@ -424,17 +424,16 @@ int CCachedDirectory::EnumFiles(const CTGitPath& path, CString sProjectRoot, con
 
 	GitStatus *pStatus = &CGitStatusCache::Instance().m_GitStatus;
 	UNREFERENCED_PARAMETER(pStatus);
-	git_wc_status_kind status = git_wc_status_none;
 
 	if (!path.IsDirectory())
 	{
 		CString parentDir = sSubPath;
 		int begin = parentDir.ReverseFind(L'/');
 		parentDir.Truncate(begin < 0 ? 0: begin);
-		pStatus->EnumDirStatus(sProjectRoot, parentDir, &status, TRUE, false, true, GetStatusCallback, this);
+		pStatus->EnumDirStatus(sProjectRoot, parentDir, GetStatusCallback, this);
 	}
 	else
-		pStatus->EnumDirStatus(sProjectRoot, sSubPath, &status, TRUE, false, true, GetStatusCallback, this);
+		pStatus->EnumDirStatus(sProjectRoot, sSubPath, GetStatusCallback, this);
 
 	RefreshMostImportant(false);
 
