@@ -1,4 +1,4 @@
-TortoiseGit - The coolest Interface to Git Version Control
+XXX TEST XXX - The coolest Interface to Git Version Control
 ==========================================================
 
 TortoiseGit is a Windows Shell Interface to Git based on TortoiseSVN. It's open source and can be built entirely with freely available software.
